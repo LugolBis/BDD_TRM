@@ -33,7 +33,7 @@ The `Link` structure models the connection between an association and two entiti
 
 You can consult the tests for some examples of operation :
 
-    https://github.com/LugolBis/BDD_Model/blob/main/tests/tests_integration
+https://github.com/LugolBis/BDD_Model/blob/main/tests/tests_integration
 
 == Special Notes
 
