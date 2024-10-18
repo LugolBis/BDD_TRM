@@ -1,6 +1,6 @@
 = API for Translating E/R Model to Relational Model
 
-This API allows you to convert an Entity-Relationship (E/R) model of a database into a Relational (R) model. The tool automates the process of transitioning from a conceptual design to an actual relational schema.
+This API allows you to convert an Entity-Relationship (E/R) model of a database into a Relational model. The tool automates the process of transitioning from a conceptual design to an actual relational schema.
 
 == How to Use
 
@@ -20,15 +20,20 @@ To use this API, follow these steps:
 ### Link Structure
 
 The `Link` structure models the connection between an association and two entities. It takes two booleans and two strings as parameters:
-- The booleans represent the cardinalities of the relationship:
-  - `true` indicates a **one-to-many (1:N)** relationship.
-  - `false` indicates a **one-to-one (1:1)** relationship.
-- The two strings represent the names of the entities involved in the relationship.
+
+    - The booleans represent the cardinalities of the relationship:
+
+        - `true` indicates a **one-to-many (1:N)** relationship.
+
+        - `false` indicates a **one-to-one (1:1)** relationship.
+
+    - The two strings represent the names of the entities involved in the relationship.
 
 == Examples 
 
 You can consult the tests for some examples of operation :
-    - https://github.com/LugolBis/BDD_Model/blob/main/tests/tests_integration
+
+    https://github.com/LugolBis/BDD_Model/blob/main/tests/tests_integration
 
 == Special Notes
 
