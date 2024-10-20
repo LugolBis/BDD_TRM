@@ -29,6 +29,14 @@ The `Link` structure models the connection between an association and two entiti
 
     - The two strings represent the names of the entities involved in the relationship.
 
+### Entities Structure
+
+The `Entities` structure models the list of concepts from the model E/R. It takes an `HashMap` where:
+
+   - The keys are `String` object and model the **names**.
+
+   - The values are `Vec<String>` object and model the **fields**.
+
 == Examples 
 
 You can consult the tests for some examples of operation :

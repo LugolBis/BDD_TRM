@@ -17,11 +17,21 @@ pub struct Relationships {
 
 #[derive(Debug)]
 pub struct Plan {
-    tables: HashMap<String, Vec<String>>
-}  
+    pub tables: HashMap<String, Vec<String>>
+}
+
+impl Link {
+    pub fn from(input:(&str,&str,&str,&str)) -> Self {
+        let mut cardinality_1 = true;
+        let mut cardinality_2 = true;
+        if input.0.ends_with(":1") { cardinality_1 = false; }
+        if input.1.ends_with(":1") { cardinality_2 = false; }
+        Self(cardinality_1,cardinality_2,input.2.to_string(),input.3.to_string())
+    }
+}
 
 impl Entities {
-    fn from(couples:Vec<(&str,Vec<&str>)>) -> Self {
+    pub fn from(couples:Vec<(&str,Vec<&str>)>) -> Self {
         let mut values: HashMap<String, Vec<String>> = HashMap::new();
         for couple in couples {
             values.insert(couple.0.to_string(), 
@@ -32,7 +42,7 @@ impl Entities {
 }
 
 impl Relationships {
-    fn from(couples:Vec<(&str,(Vec<&str>, (bool,bool,&str,&str)))>) -> Self {
+    pub fn from(couples:Vec<(&str,(Vec<&str>, (bool,bool,&str,&str)))>) -> Self {
         let mut values: HashMap<String, (Vec<String>, Link)> = HashMap::new();
         for couple in couples {
             values.insert(couple.0.to_string(),
@@ -44,7 +54,7 @@ impl Relationships {
 }
 
 impl Plan {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {tables: HashMap::new()}
     }
 
@@ -160,7 +170,7 @@ impl Plan {
         self.tables.insert(relationship.0, attribute);
     }
 
-    fn translate(&mut self, entities: Entities, relationships: Relationships) {
+    pub fn translate(&mut self, entities: Entities, relationships: Relationships) {
         for entity in entities.values {
             self.tables.insert(entity.0,entity.1);
         }
