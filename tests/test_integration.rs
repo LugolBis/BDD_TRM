@@ -1,8 +1,8 @@
 // This crate contains the tests integration of the project
 
 use std::collections::HashMap;
-extern crate BDD_Model;
-use BDD_Model::*;
+extern crate BDD_TRM;
+use BDD_TRM::*;
 
 #[test]
 fn test_one_to_one_same() {
