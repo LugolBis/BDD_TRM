@@ -41,7 +41,7 @@ The `Entities` structure models the list of concepts from the model E/R. It take
 
 You can consult the tests for some examples of operation :
 
-https://github.com/LugolBis/BDD_Model/blob/main/tests/tests_integration
+https://github.com/LugolBis/BDD_Model/blob/main/tests/test_integration.rs
 
 == Special Notes
 
