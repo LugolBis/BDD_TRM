@@ -7,12 +7,12 @@ pub struct Link(bool,bool,String,String);
 
 #[derive(Debug)]
 pub struct Entities {
-    values: HashMap<String, Vec<String>>
+    pub values: HashMap<String, Vec<String>>
 }
 
 #[derive(Debug)]
 pub struct Relationships {
-    values: HashMap<String, (Vec<String>, Link)>
+    pub values: HashMap<String, (Vec<String>, Link)>
 }  
 
 #[derive(Debug)]
@@ -31,6 +31,10 @@ impl Link {
 }
 
 impl Entities {
+    pub fn new() -> Self {
+        Self{values:HashMap::new()}
+    }
+
     pub fn from(couples:Vec<(&str,Vec<&str>)>) -> Self {
         let mut values: HashMap<String, Vec<String>> = HashMap::new();
         for couple in couples {
@@ -42,6 +46,10 @@ impl Entities {
 }
 
 impl Relationships {
+    pub fn new() -> Self {
+        Self{values:HashMap::new()}
+    }
+    
     pub fn from(couples:Vec<(&str,(Vec<&str>, (bool,bool,&str,&str)))>) -> Self {
         let mut values: HashMap<String, (Vec<String>, Link)> = HashMap::new();
         for couple in couples {
