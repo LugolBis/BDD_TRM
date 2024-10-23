@@ -1,5 +1,5 @@
 mod interface;
 
 fn main() {
-    interface::run();
+    interface::run2();
 }
