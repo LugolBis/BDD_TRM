@@ -3,6 +3,41 @@
 use eframe::egui;
 use BDD_TRM::*;
 
+#[derive(Debug)]
+pub struct UiEntities {
+    pub show_all: bool,        // groupe 1
+    
+    pub show_one: bool,        // groupe 2 
+    pub name: String,          // groupe 2
+    pub fields: String,        // groupe 2
+    
+    pub add_one: bool,         // groupe 3
+    pub new_name: String,      // groupe 3
+    pub new_fields: String,    // groupe 3
+    
+    pub delete_one: bool,      // groupe 4 
+    pub delete_name: String,   // groupe 4
+    pub delete_output: String, // groupe 4
+}
+
+#[derive(Debug)]
+pub struct UiRelationships {
+    pub show_all: bool,        // groupe 1
+    
+    pub show_one: bool,        // groupe 2 
+    pub name: String,          // groupe 2
+    pub fields: String,        // groupe 2
+    
+    pub add_one: bool,         // groupe 3
+    pub new_name: String,      // groupe 3
+    pub new_fields: String,    // groupe 3
+    pub new_link: (String,String,String,String),
+    
+    pub delete_one: bool,      // groupe 4 
+    pub delete_name: String,   // groupe 4
+    pub delete_output: String, // groupe 4
+}
+
 pub fn run() -> eframe::Result {
 
     let options = eframe::NativeOptions {
