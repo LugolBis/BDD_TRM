@@ -2,26 +2,34 @@
 
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Link(bool,bool,String,String);
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Entities {
     pub values: HashMap<String, Vec<String>>
 }
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Relationships {
     pub values: HashMap<String, (Vec<String>, Link)>
 }  
 
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Plan {
     pub tables: HashMap<String, Vec<String>>
 }
 
 impl Link {
     pub fn from(input:(&str,&str,&str,&str)) -> Self {
+        let mut cardinality_1 = true;
+        let mut cardinality_2 = true;
+        if input.0.ends_with(":1") { cardinality_1 = false; }
+        if input.1.ends_with(":1") { cardinality_2 = false; }
+        Self(cardinality_1,cardinality_2,input.2.to_string(),input.3.to_string())
+    }
+
+    pub fn from_string(input:(String,String,String,String)) -> Self {
         let mut cardinality_1 = true;
         let mut cardinality_2 = true;
         if input.0.ends_with(":1") { cardinality_1 = false; }
@@ -74,7 +82,7 @@ impl Plan {
                 vector.extend_from_slice(&relationship.1.0);
             }
             else {
-                panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'",entity_1)
+                self.tables.insert(relationship.0,vec![format!("ERROR : {} doesn't exist.",entity_1)]);
             }
         } else {
             let mut attribute: Vec<String> = Vec::new();
@@ -85,14 +93,15 @@ impl Plan {
                         if value.starts_with("#") && (value.find("##")==None) { Some(format!("##{}_{}", entity_1, &value[1..]).to_string()) }
                         else { None } }).collect();
                 },
-                None => panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'",entity_1)
+                None => attribute.push(format!("ERROR : {} doesn't exist.",entity_1))
             }
             attribute.extend_from_slice(&relationship.1.0);     // We add all the fields from the relationship
             if let Some(vector_2) = self.tables.get_mut(&entity_2) {
                 vector_2.extend_from_slice(&attribute);
             }
             else {
-                panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'",entity_2)
+                attribute.push(format!("ERROR : {} doesn't exist.",entity_2));
+                self.tables.insert(relationship.0,attribute);
             }
         }
     }
@@ -109,13 +118,14 @@ impl Plan {
                         if value.starts_with("#") && (value.find("##")==None) { Some(format!("##{}_{}", entity_2, &value[1..]).to_string()) }
                         else { None } }).collect();
                 },
-                None=> panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'.",entity_2)
+                None=> attribute.push(format!("ERROR : {} doesn't exist.",entity_2))
             }
             attribute.extend_from_slice(&relationship.1.0);
             if let Some(vector_1) = self.tables.get_mut(&entity_1) {
                 vector_1.extend_from_slice(&attribute);
             } else {
-                panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'.",entity_1)
+                attribute.push(format!("ERROR : {} doesn't exist.",entity_1));
+                self.tables.insert(relationship.0,attribute);
             }
         } else {
             match self.tables.get(&entity_1) {
@@ -125,13 +135,14 @@ impl Plan {
                         if value.starts_with("#") && (value.find("##")==None) { Some(format!("##{}_{}", entity_1, &value[1..]).to_string()) }
                         else { None } }).collect();
                 },
-                None=> panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'.",entity_1)
+                None=> attribute.push(format!("ERROR : {} doesn't exist.",entity_1))
             }
             attribute.extend_from_slice(&relationship.1.0);
             if let Some(vector_2) = self.tables.get_mut(&entity_2) {
                 vector_2.extend_from_slice(&attribute);
             } else {
-                panic!("The entity : {} isn't in the 'Entities' arg from the method '.translate()'.",entity_2)
+                attribute.push(format!("ERROR : {} doesn't exist.",entity_2));
+                self.tables.insert(relationship.0,attribute);
             }
         }
     }
@@ -150,7 +161,7 @@ impl Plan {
                         }
                     }
                 },
-                None=> panic!("The entity : {} doesn't exist in 'Plan.entities'.",entity_1)
+                None=> attribute.push(format!("ERROR : {} doesn't exist.",entity_1))
             }
         }
         else {
@@ -161,7 +172,7 @@ impl Plan {
                             if value.starts_with("#") && (value.find("##")==None) { Some(format!("##{}_{}", entity_1, &value[1..]).to_string()) }
                             else { None } }).collect();
                 },
-                None=> panic!("The entity : {} doesn't exist in 'Plan.entities'.",entity_1)
+                None=> attribute.push(format!("ERROR : {} doesn't exist.",entity_1))
             }
             match self.tables.get(&entity_2) {
                 Some(vector_2) => {
@@ -171,7 +182,7 @@ impl Plan {
                             else { None } }).collect();
                     attribute.extend_from_slice(&other_values);
                 },
-                None=> panic!("The entity : {} doesn't exist in 'Plan.entities'.",entity_2)
+                None=> attribute.push(format!("ERROR : {} doesn't exist.",entity_2))
             }
         }
         attribute.extend_from_slice(&relationship.1.0);

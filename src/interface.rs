@@ -1,7 +1,10 @@
 // User interface 
 
 use eframe::egui;
-use BDD_TRM::*;
+use crate::api::*;
+use std::fs::File;
+use std::io::{self, Read};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct UiEntities {
@@ -31,121 +34,109 @@ pub struct UiRelationships {
     pub add_one: bool,         // groupe 3
     pub new_name: String,      // groupe 3
     pub new_fields: String,    // groupe 3
-    pub new_link: (String,String,String,String),
+    pub new_link: (String,String,String,String), // groupe 3
     
     pub delete_one: bool,      // groupe 4 
     pub delete_name: String,   // groupe 4
     pub delete_output: String, // groupe 4
 }
 
-pub fn run() -> eframe::Result {
+impl UiEntities {
+    pub fn new() -> Self {
+        Self{show_all: false, show_one: false, name: String::new(), fields: String::new(), add_one: false, new_name: String::new(),
+            new_fields: String::new(), delete_one: false, delete_name: String::new(), delete_output: String::new()}
+    }
+}
 
+impl UiRelationships {
+    pub fn new() -> Self {
+        Self{show_all: false, show_one: false, name: String::new(), fields: String::new(), add_one: false, new_name: String::new(),
+            new_fields: String::new(), new_link: (String::new(),String::new(),String::new(),String::new()),
+            delete_one: false, delete_name: String::new(), delete_output: String::new()}
+    }
+}
+
+pub fn run() -> eframe::Result {
+    let icon_vec  = read_icon_data("icon.txt").unwrap_or(vec![]);
+    let icon = Arc::new(egui::viewport::IconData{rgba: icon_vec, width: 256u32, height: 256u32});
     let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([1080.0, 850.0]),
-        ..Default::default()
+        viewport: egui::ViewportBuilder{inner_size:Some([1080.0, 850.0].into()),resizable:Some(true), icon:icon.into(),..Default::default()},
+        centered:true,..Default::default()
     };
 
-    // Our application state:
+    const FONT_TITLE: egui::FontId = egui::FontId::proportional(50.0);
+    const FONT_USUAL: egui::FontId = egui::FontId::proportional(25.0);
+    
     let mut entities = Entities::new();
-    entities.values.insert("Voiture".to_string(), vec!["#NVEH".to_string(),"couleur".to_string()]);
-    entities.values.insert("Garage".to_string(), vec!["#adresse".to_string(),"nom".to_string()]);
     let mut relationships = Relationships::new();
-    let mut plan = Plan::new();
 
-    // Entities :
-    let mut show_entities = false;  // groupe 1
-
-    let mut entity_name = String::new(); // groupe 2
-    let mut entity_fields = String::new(); // groupe 2
-    let mut show_entity = false; // groupe 2 
-
-    let mut new_name = String::new(); // groupe 3
-    let mut new_fields = String::new(); // groupe 3
-    let mut add_entity = false;  // groupe 3
-
-    let mut delete_name = String::new(); // groupe 4
-    let mut delete_output = String::new(); // groupe 4
-    let mut delete_entity = false; // groupe 4
-
-    let mut show_relationships = false;  // groupe 1
-
-    let mut relationship_name = String::new(); // groupe 2
-    let mut relationship_fields = String::new(); // groupe 2
-    let mut show_relationship = false; // groupe 2 
-
-    let mut new_name_r = String::new(); // groupe 3
-    let mut new_fields_r = String::new(); // groupe 3
-    let mut cardinality_1 = String::new();
-    let mut cardinality_2 = String::new();
-    let mut entity_1 = String::new();
-    let mut entity_2 = String::new();
-    let mut add_relationship = false;  // groupe 3
-
-    let mut delete_name_r = String::new(); // groupe 4
-    let mut delete_output_r = String::new(); // groupe 4
-    let mut delete_relationship = false; // groupe 4
+    let mut ui_e = UiEntities::new();
+    let mut ui_r = UiRelationships::new();
+    let mut tables = String::new();
 
     eframe::run_simple_native("BDD_TRM", options, move |ctx, _frame| {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.heading("Welcome in BDD_TRM !");
-            ui.vertical(|ui| {
+
+            ui.heading(egui::RichText::new("Welcome in BDD_TRM !").font(FONT_TITLE));
+            egui::ScrollArea::vertical().show(ui, |ui| {
                 // Entities :
-                ui.label("Entities");
+                ui.label(egui::RichText::new("Entities").font(FONT_TITLE));
 
                 ui.group(|ui| {
-                    ui.checkbox(&mut show_entities, "Show entities");
-                    if show_entities {
+                    ui.checkbox(&mut ui_e.show_all, egui::RichText::new("Show entities").font(FONT_USUAL));
+                    if ui_e.show_all {
                         for entity in entities.values.keys() {
-                            ui.label(format!("-> {}",entity).as_str());
+                            ui.label(egui::RichText::new(format!("-> {}",entity).as_str()).font(FONT_USUAL));
                         }
                         ui.set_invisible(); 
                     }
-                });
+                }); 
                 ui.group(|ui| {
-                    ui.checkbox(&mut show_entity, "Show fields of entity");
-                    if show_entity {
-                        ui.label("Name");
-                        ui.text_edit_singleline(&mut entity_name);
-                        ui.label(&entity_fields);
-                        if ui.button("Search").clicked() {
-                            &entity_fields.truncate(0);
-                            if let Some(vector) = entities.values.get(&entity_name) {
-                                &entity_fields.push_str(&format!("{:#?}",vector));
+                    ui.checkbox(&mut ui_e.show_one, egui::RichText::new("Show fields of entity").font(FONT_USUAL));
+                    if ui_e.show_one {
+                        ui.label(egui::RichText::new("Name").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_e.name);
+                        ui.label(egui::RichText::new(&ui_e.fields).font(FONT_USUAL));
+                        if ui.button(egui::RichText::new("Search").font(FONT_USUAL)).clicked() {
+                            &ui_e.fields.truncate(0);
+                            if let Some(vector) = entities.values.get(&ui_e.name) {
+                                &ui_e.fields.push_str(&format!("{:#?}",vector));
                             }
                             else {
-                                &entity_fields.push_str(&format!("Entity '{:?}' doen't exist.",&entity_name));
+                                &ui_e.fields.push_str(&format!("Entity '{:?}' doen't exist.",&ui_e.name));
                             }
                         }
                         ui.set_invisible();
                     }
                 });
                 ui.group(|ui| {
-                    ui.checkbox(&mut add_entity, "Add / Alter");
-                    if add_entity {
-                        ui.label("Name :");
-                        ui.text_edit_singleline(&mut new_name);
-                        ui.label("Fields (split each field with a ',' and the primary keys need to strat with '#') :");
-                        ui.text_edit_singleline(&mut new_fields);
-                        if ui.button("Commit").clicked() {
-                            entities.values.insert(new_name.clone(),new_fields.split(',').map(|val| val.trim().to_string()).collect());
+                    ui.checkbox(&mut ui_e.add_one, egui::RichText::new("Add / Alter").font(FONT_USUAL));
+                    if ui_e.add_one {
+                        ui.label(egui::RichText::new("Name :").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_e.new_name);
+                        ui.label(egui::RichText::new("Fields (split each field with a ',' and the primary keys need to start with '#') :")
+                            .font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_e.new_fields);
+                        if ui.button(egui::RichText::new("Commit").font(FONT_USUAL)).clicked() {
+                            entities.values.insert(ui_e.new_name.clone(),ui_e.new_fields.split(',').map(|val| val.trim().to_string()).collect());
                         }
                         ui.set_invisible();
                     }
                     
                 });
                 ui.group(|ui| {
-                    ui.checkbox(&mut delete_entity, "Delete");
-                    if delete_entity {
-                        ui.label("Entity name :");
-                        ui.text_edit_singleline(&mut delete_name);
-                        ui.label(&delete_output);
-                        if ui.button("Delete").clicked() {
-                            &delete_output.truncate(0);
-                            if let Some(value) = entities.values.remove(&delete_name) {
-                                &delete_output.push_str("Successfuly deleted.");
+                    ui.checkbox(&mut ui_e.delete_one, egui::RichText::new("Delete").font(FONT_USUAL));
+                    if ui_e.delete_one {
+                        ui.label(egui::RichText::new("Entity name :").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_e.delete_name);
+                        ui.label(egui::RichText::new(&ui_e.delete_output).font(FONT_USUAL));
+                        if ui.button(egui::RichText::new("Delete").font(FONT_USUAL)).clicked() {
+                            &ui_e.delete_output.truncate(0);
+                            if let Some(value) = entities.values.remove(&ui_e.delete_name) {
+                                &ui_e.delete_output.push_str("Successfuly deleted.");
                             }
                             else {
-                                &delete_output.push_str(&format!("Entity '{:?}' doen't exist.",&entity_name));
+                                &ui_e.delete_output.push_str(&format!("Entity '{:?}' doen't exist.",&ui_e.delete_name));
                             }
                         }
                         ui.set_invisible();
@@ -153,79 +144,105 @@ pub fn run() -> eframe::Result {
                 });
 
                 // Relationships :
-                ui.label("Relationships");
+                ui.label(egui::RichText::new("Relationships").font(FONT_TITLE));
 
                 ui.group(|ui| {
-                    ui.checkbox(&mut show_relationships, "Show relationships");
-                    if show_relationships {
+                    ui.checkbox(&mut ui_r.show_all, egui::RichText::new("Show relationships").font(FONT_USUAL));
+                    if ui_r.show_all {
                         for relationship in relationships.values.keys() {
-                            ui.label(format!("-> {}",relationship).as_str());
+                            ui.label(egui::RichText::new(format!("-> {}",relationship).as_str()).font(FONT_USUAL));
                         }
                         ui.set_invisible(); 
                     }
                 });
                 ui.group(|ui| {
-                    ui.checkbox(&mut show_relationship, "Show fields/link of relationship");
-                    if show_relationship {
-                        ui.label("Name");
-                        ui.text_edit_singleline(&mut relationship_name);
-                        ui.label(&relationship_fields);
-                        if ui.button("Search").clicked() {
-                            &relationship_fields.truncate(0);
-                            if let Some(tuple) = relationships.values.get(&relationship_name) {
-                                &relationship_fields.push_str(&format!("Fields : {:#?}\n{:#?}",tuple.0,tuple.1));
+                    ui.checkbox(&mut ui_r.show_one, egui::RichText::new("Show fields/link of relationship").font(FONT_USUAL));
+                    if ui_r.show_one {
+                        ui.label(egui::RichText::new("Name").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.name);
+                        ui.label(egui::RichText::new(&ui_r.fields).font(FONT_USUAL));
+                        if ui.button(egui::RichText::new("Search").font(FONT_USUAL)).clicked() {
+                            &ui_r.fields.truncate(0);
+                            if let Some(tuple) = relationships.values.get(&ui_r.name) {
+                                &ui_r.fields.push_str(&format!("Fields : {:#?}\n{:#?}",tuple.0,tuple.1));
                             }
                             else {
-                                &relationship_fields.push_str(&format!("Relationship '{:?}' doen't exist.",&relationship_name));
+                                &ui_r.fields.push_str(&format!("Relationship '{:?}' doen't exist.",&ui_r.name));
                             }
                         }
                         ui.set_invisible();
                     }
                 });
                 ui.group(|ui| {
-                    ui.checkbox(&mut add_relationship, "Add / Alter");
-                    if add_relationship {
-                        ui.label("Name :");
-                        ui.text_edit_singleline(&mut new_name_r);
-                        ui.label("Fields (split each field with a ',' and the primary keys need to strat with '#') :");
-                        ui.text_edit_singleline(&mut new_fields_r);
-                        ui.label("Link of the relationship");
-                        ui.label("Entity 1");
-                        ui.text_edit_singleline(&mut entity_1);
-                        ui.label("Cardinality 1 (between Entity 1 and the current relationship)");
-                        ui.text_edit_singleline(&mut cardinality_1);
-                        ui.label("Entity 2");
-                        ui.text_edit_singleline(&mut entity_2);
-                        ui.label("Cardinality 2 (between Entity 2 and the current relationship)");
-                        ui.text_edit_singleline(&mut cardinality_2);
-                        if ui.button("Commit").clicked() {
-                            relationships.values.insert(new_name_r.clone(),
-                            (new_fields_r.split(',').map(|val| val.trim().to_string()).collect(),
-                            Link::from((&cardinality_1,&cardinality_2,&entity_1,&entity_2)) ));
+                    ui.checkbox(&mut ui_r.add_one, egui::RichText::new("Add / Alter").font(FONT_USUAL));
+                    if ui_r.add_one {
+                        ui.label(egui::RichText::new("Name").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.new_name);
+                        ui.label(egui::RichText::new("Fields (split each field with a ',' and the primary keys need to start with '#') :")
+                            .font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.new_fields);
+                        ui.label(egui::RichText::new("Link of the relationship").font(FONT_USUAL));
+                        ui.label(egui::RichText::new("Entity 1").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.new_link.2);
+                        ui.label( egui::RichText::new("Cardinality 1 (between Entity 1 and the current relationship)")
+                            .font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.new_link.0);
+                        ui.label(egui::RichText::new("Entity 2").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.new_link.3);
+                        ui.label( egui::RichText::new("Cardinality 2 (between Entity 2 and the current relationship)")
+                            .font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.new_link.1);
+                        if ui.button(egui::RichText::new("Commit").font(FONT_USUAL)).clicked() {
+                            relationships.values.insert(ui_r.new_name.clone(),
+                            (ui_r.new_fields.split(',').map(|val| val.trim().to_string()).collect(),
+                            Link::from_string(ui_r.new_link.clone())));
                         }
                         ui.set_invisible();
                     }
-                    
                 });
                 ui.group(|ui| {
-                    ui.checkbox(&mut delete_relationship, "Delete");
-                    if delete_relationship {
-                        ui.label("Relationship name :");
-                        ui.text_edit_singleline(&mut delete_name_r);
-                        ui.label(&delete_output_r);
-                        if ui.button("Delete").clicked() {
-                            &delete_output_r.truncate(0);
-                            if let Some(value) = relationships.values.remove(&delete_name_r) {
-                                &delete_output_r.push_str("Successfuly deleted.");
+                    ui.checkbox(&mut ui_r.delete_one, egui::RichText::new("Delete").font(FONT_USUAL));
+                    if ui_r.delete_one {
+                        ui.label(egui::RichText::new("Relationship name :").font(FONT_USUAL));
+                        ui.text_edit_singleline(&mut ui_r.delete_name);
+                        ui.label(egui::RichText::new(&ui_r.delete_output).font(FONT_USUAL));
+                        if ui.button(egui::RichText::new("Delete").font(FONT_USUAL)).clicked() {
+                            &ui_r.delete_output.truncate(0);
+                            if let Some(value) = relationships.values.remove(&ui_r.delete_name) {
+                                &ui_r.delete_output.push_str("Successfuly deleted.");
                             }
                             else {
-                                &delete_output_r.push_str(&format!("Entity '{:?}' doen't exist.",&delete_name_r));
+                                &ui_r.delete_output.push_str(&format!("Entity '{:?}' doen't exist.",&ui_r.delete_name));
                             }
                         }
                         ui.set_invisible();
                     }   
                 });
+
+                // Plan - Translate to the relational model
+                ui.label(egui::RichText::new("Tables").font(FONT_TITLE));
+                if ui.button(egui::RichText::new("Translate to relationnal model").font(FONT_USUAL)).clicked() {
+                    tables.truncate(0);
+                    let mut plan = Plan::new();
+                    plan.translate(entities.clone(), relationships.clone());
+                    for table in plan.tables {
+                        tables.push_str(&format!("{} : (",table.0));
+                        for field in table.1 {
+                            tables.push_str(&format!("{},",field));
+                        }
+                        tables.pop(); tables.push_str(")\n");
+                    }
+                }
+                ui.label(egui::RichText::new("\n").font(FONT_USUAL));
+                ui.label( egui::RichText::new(&tables).font(FONT_USUAL));
             });
         });
     })
+}
+
+pub fn read_icon_data(file_path: &str) -> io::Result<Vec<u8>> {
+    let mut file = File::open(file_path)?;
+    let mut pixel_data = Vec::new();
+    file.read_to_end(&mut pixel_data)?;
+    Ok(pixel_data)
 }
