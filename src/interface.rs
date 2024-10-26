@@ -6,6 +6,8 @@ use std::fs::File;
 use std::io::{self, Read};
 use std::sync::Arc;
 
+const ICON_DATA_BYTES: &[u8] = include_bytes!("../icon.txt"); // Extract the bytes from the file
+
 #[derive(Debug)]
 pub struct UiEntities {
     pub show_all: bool,        // groupe 1
@@ -57,7 +59,7 @@ impl UiRelationships {
 }
 
 pub fn run() -> eframe::Result {
-    let icon_vec  = read_icon_data("icon.txt").unwrap_or(vec![]);
+    let icon_vec  = ICON_DATA_BYTES.to_vec();
     let icon = Arc::new(egui::viewport::IconData{rgba: icon_vec, width: 256u32, height: 256u32});
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder{inner_size:Some([1080.0, 850.0].into()),resizable:Some(true), icon:icon.into(),..Default::default()},
@@ -279,12 +281,4 @@ pub fn run() -> eframe::Result {
         });
         });
     })
-}
-
-// This function read the file "icon.txt" and return a matrix of the RGB values
-pub fn read_icon_data(file_path: &str) -> io::Result<Vec<u8>> {
-    let mut file = File::open(file_path)?;
-    let mut pixel_data = Vec::new();
-    file.read_to_end(&mut pixel_data)?;
-    Ok(pixel_data)
 }
