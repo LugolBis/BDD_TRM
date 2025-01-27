@@ -1,8 +1,11 @@
-= API for Translating E/R Model to Relational Model
+# BDD_TRM
+## Application for Translating E/R Model to Relational Model
 
 This API allows you to convert an Entity-Relationship (E/R) model of a database into a Relational model. The tool automates the process of transitioning from a conceptual design to an actual relational schema.
 
-== How to Use
+![lulu](icon.png "lulu")
+
+## How to Use
 
 To use this API, follow these steps:
 
@@ -15,7 +18,7 @@ To use this API, follow these steps:
 3. **Translate the E/R Model:**
    Create a `Plan` object and use the `.translate()` method to convert the E/R model into a relational schema.
 
-== Structure Overview
+## Structure Overview
 
 ### Link Structure
 
@@ -37,12 +40,12 @@ The `Entities` structure models the list of concepts from the model E/R. It take
 
    - The values are `Vec<String>` object and model the **fields**.
 
-== Examples 
+## Examples 
 
 You can consult the tests for some examples of operation :
 
 https://github.com/LugolBis/BDD_Model/blob/main/tests/test_integration.rs
 
-== Special Notes
+## Special Notes
 
 For one-to-one relationships between two distinct entities, the new fields resulting from the relationship are added to the second entity in the relationship (as represented by the second string in the `Link` structure).
